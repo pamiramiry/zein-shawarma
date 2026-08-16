@@ -624,6 +624,40 @@ svg{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-l
 @media(min-width:860px){.says{grid-template-columns:1fr 1fr}}
 .say{padding:28px 0;border-bottom:1px solid var(--line)}
 .say:last-child{border-bottom:none}
+
+/* Below the grid breakpoint the same four quotes become a swipeable track.
+   All of this is native CSS scroll-snap: it works with JS off, and it only
+   ever moves under a finger. The dots are the only scripted part.
+   DO NOT add auto-advance. The page already has its two moving bands. */
+@media(max-width:859px){
+  .says{
+    display:flex;grid-template-columns:none;
+    overflow-x:auto;overflow-y:hidden;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    /* a hair of room so the focus ring is not clipped by the scroller */
+    padding-bottom:2px;
+  }
+  .says::-webkit-scrollbar{display:none}
+  .says:focus-visible{outline:1px solid var(--ember-ink);outline-offset:4px}
+  .say{
+    flex:0 0 100%;scroll-snap-align:start;
+    border-bottom:none;padding:26px 0 4px;
+    /* the quotes vary in length. equal heights stop the dots jumping. */
+    display:flex;flex-direction:column;
+  }
+  .say__by{margin-top:auto;padding-top:15px}
+}
+
+/* 18x1px dashes, the same hairline language as everything else here.
+   Hidden at the grid breakpoint, where all four quotes are already visible. */
+.saysdots{
+  display:flex;justify-content:center;gap:8px;
+  margin-top:20px;
+}
+.saysdots button{height:2px}
+@media(min-width:860px){.saysdots{display:none}}
 @media(min-width:860px){
   .say:nth-child(odd){padding-right:48px}
   .say:nth-child(even){padding-left:48px;border-left:1px solid var(--line)}
@@ -793,6 +827,9 @@ svg{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-l
 
 /* ============ sticky dock (mobile) ============ */
 
+/* Parked off-screen until the hero is behind you. The hero already carries
+   Order and Directions at full size, so showing the dock over it is the same
+   two actions twice, covering 62px of the one frame meant to sell the food. */
 .dock{
   position:fixed;left:0;right:0;bottom:0;z-index:95;
   display:grid;grid-template-columns:1.4fr 1fr 1fr;
@@ -800,6 +837,12 @@ svg{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-l
   padding-bottom:env(safe-area-inset-bottom);
   background:rgba(11,11,12,.97);
   border-top:1px solid var(--line);
+  transform:translateY(100%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+}
+.dock.is-up{transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){
+  .dock{transition:none}
 }
 .dock__a{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;

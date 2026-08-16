@@ -819,14 +819,113 @@
   })();
 
   /* ------------------------------------------------------------------
+     7b. Review dots
+     ------------------------------------------------------------------
+     The track itself is native CSS scroll-snap, so swiping works with this
+     file removed entirely. All this adds is the position indicator.
+
+     Dots count REACHABLE scroll stops, not quotes. At the grid breakpoint the
+     track stops scrolling, so there are no stops and the dots hide themselves
+     rather than sitting there dead.
+
+     It never advances on its own. The page has exactly two moving bands and
+     this is not allowed to become the third.
+     ------------------------------------------------------------------ */
+
+  (function reviewDots() {
+    var track = $('#saysTrack');
+    var wrap = $('#saysDots');
+    if (!track || !wrap) return;
+
+    var cards = $$('.say', track);
+    if (cards.length < 2) return;
+    var dots = [];
+
+    function step() {
+      var s = cards[1].offsetLeft - cards[0].offsetLeft;
+      return s > 0 ? s : track.clientWidth || 1;
+    }
+    function maxScroll() { return Math.max(0, track.scrollWidth - track.clientWidth); }
+    function pages() {
+      if (maxScroll() <= 2) return 0;             // not scrollable: no dots
+      return Math.max(1, Math.min(cards.length, Math.round(maxScroll() / step()) + 1));
+    }
+    function index() {
+      var n = pages();
+      if (!n) return 0;
+      if (track.scrollLeft >= maxScroll() - 2) return n - 1;
+      return Math.max(0, Math.min(n - 1, Math.round(track.scrollLeft / step())));
+    }
+
+    function build() {
+      var n = pages();
+      if (dots.length === n) return;              // unchanged, keep focus stable
+      wrap.innerHTML = '';
+      dots = [];
+      for (var i = 0; i < n; i++) {
+        (function (idx) {
+          var d = document.createElement('button');
+          d.type = 'button';
+          d.setAttribute('role', 'tab');
+          d.setAttribute('aria-label', 'Show review ' + (idx + 1) + ' of ' + n);
+          d.addEventListener('click', function () {
+            var left = idx >= n - 1 ? maxScroll() : cards[idx].offsetLeft - cards[0].offsetLeft;
+            track.scrollTo({ left: left, behavior: reduceMotion ? 'auto' : 'smooth' });
+          });
+          wrap.appendChild(d);
+          dots.push(d);
+        })(i);
+      }
+    }
+
+    function sync() {
+      var at = index();
+      dots.forEach(function (d, i) {
+        d.classList.toggle('is-on', i === at);
+        d.setAttribute('aria-current', i === at ? 'true' : 'false');
+      });
+    }
+
+    var raf;
+    track.addEventListener('scroll', function () {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(sync);
+    }, { passive: true });
+    window.addEventListener('resize', function () { build(); sync(); });
+
+    build();
+    sync();
+  })();
+
+  /* ------------------------------------------------------------------
      8. Small stuff
      ------------------------------------------------------------------ */
 
   (function chrome() {
     var bar = $('#bar');
-    if (bar) {
-      var onScroll = function () { bar.classList.toggle('is-stuck', window.scrollY > 40); };
+    var dock = $('.dock');
+    var hero = $('#top');
+
+    /* The dock stays off screen until the hero is behind you. Measured from
+       the hero's own height rather than a fixed pixel count, so it stays
+       right when the viewport changes. The 90px lead lets it arrive just
+       before the hero fully clears rather than snapping in late. */
+    function dockPoint() {
+      return hero ? Math.max(200, hero.offsetHeight - 90) : 320;
+    }
+
+    if (bar || dock) {
+      var docked = null;
+      var onScroll = function () {
+        var y = window.scrollY;
+        if (bar) bar.classList.toggle('is-stuck', y > 40);
+        if (dock) {
+          var up = y > dockPoint();
+          if (up !== docked) { dock.classList.toggle('is-up', up); docked = up; }
+        }
+      };
       window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
       onScroll();
     }
 

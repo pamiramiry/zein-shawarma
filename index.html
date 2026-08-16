@@ -308,7 +308,11 @@
        No sub-heading above these on purpose: every quote carries a "GOOGLE,
        JULY 2026" line, which says what they are without rebuilding the second
        section head this merge removed. -->
-  <ul class="says">
+  <!-- Two column grid on desktop. Below 860px it becomes a swipeable
+       scroll-snap track, one quote per view, which is native CSS: main.js
+       only adds the dots on top. It moves on a finger and never on its own,
+       so it is not a third moving band. Never make it auto-advance. -->
+  <ul class="says" id="saysTrack" tabindex="0" role="group" aria-label="Customer reviews, swipe to see more">
     <li class="say">
       <blockquote class="say__q"><p>Since I had never tried their famous garlic sauce before, [Khalil] kindly offered me a spoonful paired with a freshly cooked potato so I could taste it before ordering. That small gesture spoke volumes about his hospitality.</p></blockquote>
       <p class="say__by"><span class="say__who">Arjoon V.</span><span class="say__meta">Google, July 2026</span></p>
@@ -326,6 +330,8 @@
       <p class="say__by"><span class="say__who">Jcboyyy</span><span class="say__meta">Google, March 2026</span></p>
     </li>
   </ul>
+
+  <div class="saysdots dots" id="saysDots" role="tablist" aria-label="Review pagination"></div>
 
   <!-- One line, one link. It used to carry five source links, but the ticker
        items above already name their own source inline ("4.8 on Google",

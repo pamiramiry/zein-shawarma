@@ -201,7 +201,18 @@ The order inside it is deliberate: **numbers first, words second.**
 
 **There is no sub-heading above the quotes and there should not be.** Every quote already carries a `GOOGLE, JULY 2026` attribution line, which says what they are. Adding a second eyebrow would rebuild the section head this merge exists to remove.
 
-The quotes are **static on purpose**: they are not a third moving band and must never become one. The ticker's screen position did not change in the merge, so the two-bands separation still holds: re-verified at 390 / 1440 / 1920, zero overlapping scroll positions, minimum gap 1207px.
+The quotes **never move on their own**, and the ticker's screen position did not change in the merge, so the two-bands separation still holds: re-verified at 390 / 1440 / 1920, zero overlapping scroll positions, minimum gap 1207px.
+
+### Below 860px the quotes are a swipe track
+
+Four stacked quotes make a very long column on a phone. Under the grid breakpoint `.says` becomes a horizontal scroll-snap track, one quote per view, with hairline dots underneath.
+
+**This is not a third moving band and must never become one.** The distinction is the whole reason it is allowed: a marquee moves on a timer, this moves on a finger. **Do not add auto-advance, and do not add a timer of any kind.** If it ever animates by itself the page has three moving things and the two-bands rule is dead.
+
+- The track is **native CSS scroll-snap**. It swipes with `main.js` deleted; the script only adds the dots. Build it that way round.
+- **Dots count reachable scroll stops, not quotes.** At the grid breakpoint the track stops scrolling, the stop count drops to zero, and the dots remove themselves rather than sitting there dead.
+- All four quotes stay in the DOM at every width. Nothing is hidden from a screen reader by the carousel; the track is a labelled, focusable `role="group"`.
+- Slides are flex children with `margin-top:auto` on the attribution, so quotes of different lengths line their names up and the dots do not jump as you swipe.
 
 - **Trim for length only.** Every word on the page is the reviewer's, in their order. A square-bracket substitution is allowed where a trim orphans a pronoun (`[a name]` for `he`), which is the standard convention and stays visibly an edit.
 - **No stars.** Google gives Food / Service / Atmosphere sub-scores on these reviews, not the single overall star. Drawing five stars would be inventing a number, which is the same failure as the misattributed rating described in the content rules.
@@ -268,6 +279,12 @@ The section routes to a **phone call, not the ordering app**. A tray is worth se
 - Reel tiles are real `<button>` elements: Enter opens, arrows move, Esc closes, focus returns to the tile that opened the viewer.
 - Visible focus rings everywhere, skip link, `aria-label` on every icon-only control.
 - The sticky mobile bar never overlaps the footer: the body carries matching bottom padding.
+
+## The dock waits for the hero
+
+The sticky mobile bar starts translated off screen and slides up only once the hero is behind you, measured from the hero's own height rather than a fixed pixel count so it stays correct as the viewport changes.
+
+It is not decoration. **Over the hero the dock is the same two actions twice**: the hero already carries Order and Directions at full size, so the dock was covering 62px of the one frame whose whole job is to sell the food. Everywhere below the hero there is no other persistent call to action, which is exactly where it earns its space.
 
 ## Content rules
 
