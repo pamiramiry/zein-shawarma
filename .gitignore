@@ -1,0 +1,26 @@
+# Raw upload archives. Kept on disk so nothing supplied is ever lost, but
+# every file in them already exists in assets/ under its working name.
+_source-videos/
+_source-brand/
+
+# Parked clip. 31 MB, 2m19s, nothing references it. See the media notes for
+# why it is not in the rail.
+assets/video/reel-09.mp4
+
+# Fed the story-circle row, which was removed. Orphaned.
+assets/img/highlights/
+
+# Dev-only type comparison page.
+font-lab.html
+
+# Client working notes: prices owed, review analysis, outstanding questions.
+# Stays local.
+MEDIA-CHECKLIST.md
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+node_modules/

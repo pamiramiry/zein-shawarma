@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Page not found | Zein Shawarma</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0B0B0C">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Bitter:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  body{padding-bottom:0;min-height:100svh;display:grid;place-items:center;text-align:center}
+  .lost{max-width:44ch;padding:var(--pad)}
+  .lost h1{font-size:clamp(33px,8.4vw,58px);letter-spacing:-.03em}
+  .lost p{margin-top:14px;color:var(--smoke);font-size:16.5px}
+  .lost .btn{margin-top:26px}
+  /* .lost p outranks a bare .lost__code, so this rule never applied and the
+     404 label rendered as --smoke at 16.5px. Scoped to win.
+     --ember-ink, not --ember: small text on dark, where the fill red only
+     reaches 4.05 against the 4.5 it needs. */
+  .lost p.lost__code{font-family:var(--display);font-weight:600;font-size:12.5px;letter-spacing:.2em;color:var(--ember-ink);margin-top:0}
+</style>
+</head>
+<body>
+<main class="lost">
+  <p class="lost__code">404</p>
+  <h1>Nothing on the spit here.</h1>
+  <p>That page does not exist. The shawarma still does, at 1837 Lawrence Ave E, daily until midnight.</p>
+  <a class="btn btn--ember btn--lg" href="/">Back to the menu</a>
+</main>
+</body>
+</html>

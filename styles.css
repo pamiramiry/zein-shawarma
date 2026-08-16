@@ -1,0 +1,888 @@
+/* ==========================================================================
+   Zein Shawarma
+   Rules are locked in DESIGN-RULES.md. Read it before editing.
+
+   House style: flat surfaces, hairlines, one accent used sparingly.
+   No glows, no gradient fills, no large radii. Restraint is the brand.
+   ========================================================================== */
+
+:root{
+  --ink:#0B0B0C;          /* page */
+  --coal:#121214;         /* raised surface */
+  --coal-2:#191A1C;       /* hover fill */
+  --line:#232426;         /* hairline */
+  --line-2:#33353A;       /* hairline, emphasised */
+
+  /* Both reds come off the storefront sign, which is the version of the brand
+     customers actually stand in front of. --ember-ink IS the sign red. --ember
+     is the same hue dropped in lightness until white text clears AA on it,
+     because the sign red itself only reaches 3.81 under white. */
+  --ember:#D62F44;        /* the accent. fills. used sparingly, on purpose */
+  --ember-ink:#EE4358;    /* the sign red. text, rules, focus rings */
+
+  --paper:#F1EDE6;        /* primary text */
+  --smoke:#8D8A84;        /* secondary text */
+  --faint:#5A5854;        /* tertiary text, fine print */
+  /* The amber off the halal badge on their own sign. Every other warm pixel
+     on this page comes from the food photography: this is the only warmth the
+     design itself contributes. It replaced --open:#5BAE7F, a stock UI green
+     that appeared nowhere in the brand. On a charcoal spit an ember dot reads
+     "the grill is on" better than a generic green does, and the words next to
+     it always say the actual state, so the colour never carries the meaning. */
+  --flame:#D9862B;        /* live status dot, eyebrow rule. hairline scale only */
+
+  --r-lg:14px;            /* media */
+  --r-md:8px;             /* cards */
+  --r-sm:5px;             /* buttons, chips, inputs */
+
+  /* A slab, not a display serif. Instrument Serif was high contrast and
+     editorial, which read fine dining. This is a counter shop. Bitter is
+     squared off and low contrast: sturdy rather than refined, and still a
+     serif, which is what keeps the page off the generic dark-template pile.
+     It has no 400 weight in use here: display type is always 600. */
+  --display:"Bitter",Georgia,"Times New Roman",serif;
+  --body:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+
+  --pad:clamp(20px,5vw,48px);
+  --maxw:1120px;
+  --dock-h:62px;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+
+body{
+  margin:0;
+  background:var(--ink);
+  color:var(--paper);
+  font-family:var(--body);
+  font-size:16px;
+  font-weight:400;
+  line-height:1.62;
+  letter-spacing:.005em;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+  padding-bottom:calc(var(--dock-h) + env(safe-area-inset-bottom));
+}
+
+img,svg,video{display:block;max-width:100%}
+ul{margin:0;padding:0;list-style:none}
+a{color:inherit;text-decoration:none}
+p{margin:0}
+
+h1,h2{
+  font-family:var(--display);
+  font-weight:600;
+  line-height:1.06;
+  letter-spacing:-.022em;
+  margin:0;
+}
+h3{font-family:var(--body);font-weight:600;letter-spacing:-.005em;margin:0}
+
+svg{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+
+:focus-visible{outline:1px solid var(--ember-ink);outline-offset:3px;border-radius:2px}
+
+/* clears the fixed bar, which is 75px once the logo mark sets its height */
+[id]{scroll-margin-top:96px}
+
+/* Readable by assistive tech, invisible on screen. Used to give the ticker,
+   whose track is aria-hidden because it duplicates itself, a plain-text
+   equivalent that is read once. */
+.sr-only{
+  position:absolute;width:1px;height:1px;
+  padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);clip-path:inset(50%);
+  white-space:nowrap;border:0;
+}
+
+.skip{
+  position:fixed;left:16px;top:-60px;z-index:200;
+  background:var(--paper);color:var(--ink);
+  padding:10px 18px;border-radius:var(--r-sm);font-weight:600;font-size:14px;
+  transition:top .18s ease;
+}
+.skip:focus{top:14px}
+
+/* ============ shared ============ */
+
+/* micro label. The structural device of the whole page: it sets hierarchy
+   without needing colour or weight, which is what keeps the page quiet. */
+.eyebrow{
+  display:flex;align-items:center;gap:12px;
+  font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--smoke);margin-bottom:18px;
+}
+.eyebrow::after{
+  content:"";height:1px;flex:1;max-width:60px;
+  /* the one warm mark in the page furniture. 60x1px, one per section head,
+     so it never competes with the red for the accent budget */
+  background:var(--flame);opacity:.7;
+}
+
+.scrim{
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(to top,
+    rgba(11,11,12,.90) 0%,
+    rgba(11,11,12,.55) 32%,
+    rgba(11,11,12,.10) 62%,
+    rgba(11,11,12,.34) 100%);
+}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-family:var(--body);font-weight:600;font-size:14.5px;
+  letter-spacing:.01em;
+  padding:13px 26px;border-radius:var(--r-sm);
+  border:1px solid transparent;cursor:pointer;
+  transition:background .18s ease,border-color .18s ease,color .18s ease;
+}
+/* flat fill, no gradient, no glow */
+/* pure white, not the old warm off-white: that was tuned to a brick-orange
+   accent and costs 0.35 of contrast against a red this pink */
+.btn--ember{background:var(--ember);color:#FFF;border-color:var(--ember)}
+.btn--ember:hover{background:#C02A3C;border-color:#C02A3C}
+.btn--ghost{border-color:var(--line-2);color:var(--paper);background:transparent}
+.btn--ghost:hover{border-color:var(--paper);background:rgba(241,237,230,.04)}
+.btn--lg{padding:15px 30px;font-size:15px}
+.btn--sm{padding:9px 18px;font-size:13.5px}
+/* left, not centred. It was the only centred element on the page */
+.btn--block{display:flex;width:100%;max-width:320px;margin:28px 0 0}
+
+.chip{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid var(--line);
+  border-radius:var(--r-sm);
+  padding:6px 12px;
+  font-size:12.5px;font-weight:500;color:var(--smoke);
+}
+.chip--gold{color:var(--paper)}
+.chip__sub{color:var(--faint);font-weight:400}
+.chip--live .dot{width:6px;height:6px;border-radius:50%;background:var(--faint);flex:none}
+.chip--live.is-open .dot{background:var(--flame)}
+.chip--live.is-open{color:var(--paper)}
+
+/* Missing media. A quiet graduated surface, not an illustration. */
+.ph{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(168deg,#171719 0%,#101012 58%,#0C0C0E 100%);
+  overflow:hidden;
+}
+.ph::after{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(78% 46% at 50% 104%,rgba(200,68,42,.16),transparent 72%);
+}
+.ph__spit{
+  position:absolute;left:50%;top:50%;translate:-50% -50%;
+  width:26px;height:26px;
+  border:1px solid var(--line-2);border-radius:50%;
+}
+.ph__spit::after{
+  content:"";position:absolute;left:50%;top:50%;translate:-50% -50%;
+  width:5px;height:5px;border-radius:50%;background:var(--line-2);
+}
+
+/* ============ top bar ============ */
+
+.bar{
+  position:fixed;inset:0 0 auto 0;z-index:90;
+  border-bottom:1px solid transparent;
+  transition:background .3s ease,border-color .3s ease;
+}
+.bar.is-stuck{background:rgba(11,11,12,.94);border-bottom-color:var(--line)}
+/* The hero scrim runs bottom-up on narrow screens, so the top of the frame is
+   unprotected and the bar sits on raw video. The SHAWARMA sub-label measured
+   3.04 there against 4.5 required. This is the bar's own scrim, and it fades
+   out once the bar goes solid. */
+.bar::before{
+  content:"";position:absolute;inset:0 0 auto 0;height:120px;
+  background:linear-gradient(180deg,rgba(11,11,12,.80) 0%,rgba(11,11,12,.44) 55%,transparent 100%);
+  pointer-events:none;transition:opacity .3s ease;
+}
+.bar.is-stuck::before{opacity:0}
+.bar__in{
+  position:relative;z-index:1;
+  max-width:var(--maxw);margin:0 auto;
+  padding:16px var(--pad);
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+
+.wordmark{display:inline-flex;align-items:center;gap:11px}
+/* the shop's own mark. it keeps its own red, which is hotter than --ember on
+   purpose: a logo is allowed to be itself, the UI palette is not */
+.wordmark__mark{
+  height:36px;width:auto;flex:none;display:block;
+}
+/* On the sign the spit stands well clear of the lettering. The bar cannot
+   afford that height, the footer can. */
+.foot .wordmark__mark{height:58px}
+.wordmark__t{
+  font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-.012em;
+  line-height:1;
+}
+.wordmark__t em{
+  display:block;font-style:normal;font-family:var(--body);font-weight:500;
+  font-size:9px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--smoke);margin-top:5px;
+}
+/* In the bar this label sits on raw hero video, where the scrim alone only
+   reaches 3.47. Size and tracking carry the hierarchy instead of dimming,
+   which is the same fix the hero kicker uses. The footer keeps --smoke: it
+   sits on solid ink and measures 5.72 there. */
+.bar .wordmark__t em{color:var(--paper)}
+
+/* ============ hero ============ */
+
+.hero{
+  position:relative;
+  min-height:100svh;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:0 var(--pad) clamp(40px,8vh,76px);
+  overflow:hidden;
+}
+.hero__media{position:absolute;inset:0;z-index:0;background:var(--ink)}
+.hero__media video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+/* Save-Data, a 2g connection or reduced motion: the poster stands in for the
+   clip and the 4.97 MB file is never requested. It is the first frame, so it
+   reads as the video paused rather than as a failure. */
+.hero__media.is-still{background-size:cover;background-position:center;background-repeat:no-repeat}
+
+/* The hero carries far more text than a reel card, so it needs its own wash.
+   Narrow screens darken from the bottom because the copy sits over the food;
+   wide screens darken from the left so the food stays clear on the right. */
+.hero .scrim{
+  background:linear-gradient(to top,
+    rgba(11,11,12,.97) 0%,
+    rgba(11,11,12,.94) 28%,
+    rgba(11,11,12,.86) 48%,
+    rgba(11,11,12,.58) 66%,
+    rgba(11,11,12,.24) 82%,
+    rgba(11,11,12,.52) 100%);
+}
+/* Measure this against glyph rects (Range.getClientRects), never element
+   boxes. An h1 is block level, so its box spans the full hero width and
+   samples bright pixels far to the right of any letter: that reads as a
+   1.68 failure on a line that actually measures 8.47. */
+@media(min-width:860px){
+  .hero .scrim{
+    background:
+      linear-gradient(to right,
+        rgba(11,11,12,.94) 0%,
+        rgba(11,11,12,.74) 34%,
+        rgba(11,11,12,.22) 62%,
+        rgba(11,11,12,.10) 100%),
+      linear-gradient(to top,
+        rgba(11,11,12,.72) 0%,
+        rgba(11,11,12,.10) 42%,
+        rgba(11,11,12,.45) 100%);
+  }
+}
+.hero__body{position:relative;z-index:2;max-width:var(--maxw);margin:0 auto;width:100%}
+
+/* full-strength paper, not a dimmed grey: at 11px over video it has to clear
+   the 4.5 small-text threshold, and opacity is what was killing it */
+.hero__kicker{
+  font-size:11px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--paper);margin-bottom:22px;
+}
+.hero__kicker span{color:var(--ember-ink);margin:0 8px}
+
+/* A slab at 600 carries far more weight per pixel than a light display
+   serif did, and Bitter sets much wider. Both scales came down when the
+   face changed: same presence, fewer lines. */
+.hero__h1{
+  font-size:clamp(40px,8.8vw,76px);
+  letter-spacing:-.026em;
+  text-wrap:balance;
+}
+.hero__sub{
+  margin-top:20px;max-width:46ch;
+  color:rgba(241,237,230,.76);font-size:clamp(15px,1.9vw,17px);line-height:1.6;
+}
+.hero__cta{display:flex;flex-wrap:wrap;gap:11px;margin-top:30px}
+
+/* meta sits on a hairline under the buttons, instead of chunky pills up top */
+.hero__meta{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;
+  margin-top:30px;padding-top:20px;
+  border-top:1px solid rgba(241,237,230,.14);
+  font-size:12.5px;color:rgba(241,237,230,.66);
+}
+.hero__meta li{display:inline-flex;align-items:center;gap:8px}
+.hero__meta .dot{width:6px;height:6px;border-radius:50%;background:var(--faint);flex:none}
+.hero__meta .is-open .dot{background:var(--flame)}
+.hero__meta b{font-weight:600;color:var(--paper)}
+
+.hero__cue{
+  position:absolute;left:50%;bottom:0;translate:-50% 0;z-index:2;
+  width:1px;height:52px;
+  background:linear-gradient(to bottom,transparent,rgba(241,237,230,.4));
+}
+
+/* ============ action strip ============ */
+
+.strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.strip__row{
+  max-width:var(--maxw);margin:0 auto;
+  display:flex;
+  padding:0 var(--pad);
+  overflow-x:auto;scrollbar-width:none;
+}
+.strip__row::-webkit-scrollbar{display:none}
+.strip__row li{flex:1 0 auto}
+.strip__row li + li{border-left:1px solid var(--line)}
+.act{
+  display:flex;align-items:center;justify-content:center;gap:9px;white-space:nowrap;
+  padding:17px 26px;
+  font-size:13px;font-weight:500;letter-spacing:.04em;
+  color:var(--smoke);
+  transition:color .18s ease,background .18s ease;
+}
+.act svg{width:15px;height:15px;color:var(--faint);transition:color .18s ease}
+.act:hover{color:var(--paper);background:rgba(241,237,230,.03)}
+.act:hover svg{color:var(--ember-ink)}
+
+/* ============ sections ============ */
+
+/* Adjacent sections stack their padding, so this value lands twice between
+   any two of them. At the old clamp(64px,10vw,120px) that was 251px of empty
+   black at desktop, 28% of a viewport, three times down the page. Halved at
+   the top end only: mobile was already fine. */
+.sec{max-width:var(--maxw);margin:0 auto;padding:clamp(52px,5.4vw,72px) var(--pad)}
+/* Bitter sets much wider than the old display serif, so the measure had to
+   grow and the size come down to keep the five headings on the same line
+   count. Tested at ten widths: they split only at 860px, where the address
+   heading flips before the rest. The previous face split at 720 and 860, so
+   this is not a regression, and chasing every width distorts the scale. */
+.sec__head{margin-bottom:clamp(28px,4vw,44px);max-width:43ch}
+.sec__h2{font-size:clamp(25px,4.3vw,44px);letter-spacing:-.024em;text-wrap:balance}
+.sec__link{
+  display:inline-block;margin-top:16px;
+  color:var(--smoke);font-size:13px;font-weight:500;letter-spacing:.04em;
+  border-bottom:1px solid var(--line-2);padding-bottom:3px;
+  transition:color .18s ease,border-color .18s ease;
+}
+.sec__link:hover{color:var(--paper);border-bottom-color:var(--paper)}
+.sec__note{margin-top:22px;color:var(--faint);font-size:13.5px}
+
+/* ============ reel marquee ============ */
+
+.sec__actions{display:flex;flex-wrap:wrap;align-items:center;gap:18px;margin-top:20px}
+.sec__actions .sec__link{margin-top:0}
+
+/* Full-bleed out of the centred section: a marquee that stops at a container
+   edge looks like a bug. The mask is what sells items entering and leaving
+   rather than being clipped. Shared by the video band and the stats ticker. */
+.marquee,.ticker{
+  position:relative;
+  width:100vw;
+  max-width:100vw;
+  margin-left:calc(50% - 50vw);
+  overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%);
+  mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%);
+}
+.marquee{padding:2px 0 6px}
+
+.marquee__track,.ticker__track{
+  display:flex;
+  width:max-content;
+  will-change:transform;
+  animation:reel-drift var(--dur,60s) linear infinite;
+}
+.marquee__track{gap:clamp(12px,1.6vw,16px)}
+.marquee__track.is-paused,.ticker__track.is-paused{animation-play-state:paused}
+/* the ticker runs the other way, so it reads as counterpoint not a copy */
+.is-reverse{animation-direction:reverse}
+
+/* --shift is one full copy of the items, measured in JS, so the wrap is exact */
+@keyframes reel-drift{
+  from{transform:translate3d(0,0,0)}
+  to{transform:translate3d(calc(var(--shift,0px) * -1),0,0)}
+}
+
+.marquee .reel{
+  flex:0 0 auto;
+  width:min(64vw,272px);
+}
+@media(min-width:700px){.marquee .reel{width:248px}}
+
+.railfoot{display:flex;align-items:center;justify-content:flex-end;margin-top:22px}
+.railplay{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:0;background:none;border:none;color:var(--faint);
+  font-family:var(--body);font-size:10.5px;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;cursor:pointer;
+  transition:color .18s ease;
+}
+.railplay:hover{color:var(--paper)}
+.railplay svg{width:13px;height:13px;flex:none}
+.railplay .ico-play{fill:currentColor;stroke:none;display:none}
+.railplay.is-stopped .ico-pause{display:none}
+.railplay.is-stopped .ico-play{display:block}
+
+/* No drift, no need for a stop control. The track becomes a plain
+   scrollable row so every card is still reachable. */
+@media(prefers-reduced-motion:reduce){
+  .railfoot{display:none}   /* covers both bands: each pause control lives in one */
+  .marquee,.ticker{overflow-x:auto;scrollbar-width:none}
+  .marquee::-webkit-scrollbar,.ticker::-webkit-scrollbar{display:none}
+  .marquee__track,.ticker__track{animation:none;padding-inline:var(--pad)}
+}
+.dots button{
+  width:18px;height:1px;padding:0;border:none;
+  background:var(--line-2);cursor:pointer;
+  transition:background .25s ease;
+}
+.dots button.is-on{background:var(--paper)}
+
+.reel{
+  position:relative;
+  aspect-ratio:9/16;
+  border-radius:var(--r-lg);
+  overflow:hidden;
+  border:1px solid var(--line);
+  background:var(--coal);
+  padding:0;margin:0;
+  cursor:pointer;text-align:left;
+  color:inherit;font:inherit;
+  transition:border-color .25s ease;
+}
+.reel:hover,.reel:focus-visible{border-color:var(--line-2)}
+.rail .reel:hover{opacity:1}
+.reel video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+
+.reel__cap{
+  position:absolute;left:0;right:0;bottom:0;z-index:2;
+  padding:14px;
+  font-size:12.5px;line-height:1.4;font-weight:500;letter-spacing:.01em;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.reel__play{
+  position:absolute;top:12px;right:12px;z-index:2;
+  width:26px;height:26px;border-radius:50%;
+  background:rgba(11,11,12,.5);border:1px solid rgba(241,237,230,.24);
+  display:grid;place-items:center;
+}
+.reel__play svg{width:11px;height:11px;fill:var(--paper);stroke:none;margin-left:1px}
+.reel__dur{
+  position:absolute;top:12px;left:12px;z-index:2;
+  font-size:10.5px;font-weight:600;letter-spacing:.06em;
+  color:rgba(241,237,230,.82);
+  font-variant-numeric:tabular-nums;
+}
+.reel--empty{cursor:default}
+.reel__slot{
+  position:absolute;left:0;right:0;bottom:0;z-index:2;
+  padding:14px;font-size:11.5px;color:var(--faint);
+}
+
+/* ============ menu ============ */
+
+.tabs{
+  display:flex;gap:28px;
+  overflow-x:auto;scrollbar-width:none;
+  border-bottom:1px solid var(--line);
+  margin-bottom:8px;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  flex:none;position:relative;
+  background:none;border:none;padding:0 0 15px;
+  color:var(--smoke);
+  font-family:var(--body);font-size:13px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;
+  transition:color .18s ease;
+}
+.tab::after{
+  content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:var(--ember);transform:scaleX(0);transform-origin:left;
+  transition:transform .25s ease;
+}
+.tab:hover{color:var(--paper)}
+.tab.is-on{color:var(--paper)}
+.tab.is-on::after{transform:scaleX(1)}
+
+/* a real menu reads as ruled rows, not a field of cards */
+.items{display:grid}
+@media(min-width:860px){.items{grid-template-columns:1fr 1fr;column-gap:56px}}
+
+/* 52px was smaller than a favicon at 2x: nothing read as food at that size,
+   on the one section of a food site that has to sell it. */
+.item{
+  display:grid;
+  grid-template-columns:84px 1fr auto;
+  align-items:center;gap:20px;
+  padding:18px 0;
+  border-bottom:1px solid var(--line);
+}
+.item__thumb{
+  width:84px;height:84px;flex:none;
+  border-radius:var(--r-md);
+  background-color:var(--coal);
+  background-image:var(--img);
+  background-size:cover;background-position:center;
+  filter:saturate(.96);
+  position:relative;
+}
+/* An item with no photo yet gets a hairline and a small spit mark, the same
+   device the empty reel tile uses. Honest and deliberate, not a dead square. */
+.item__thumb:not([style*="--img"]){
+  border:1px solid var(--line);
+  background-color:#141416;
+}
+.item__thumb:not([style*="--img"])::after{
+  content:"";position:absolute;left:50%;top:50%;translate:-50% -50%;
+  width:16px;height:16px;border-radius:50%;
+  border:1px solid var(--line-2);
+}
+.item__body h3{font-size:15.5px;letter-spacing:0}
+.item__body p{color:var(--smoke);font-size:13px;line-height:1.5;margin-top:4px}
+.item__price{
+  font-family:var(--body);font-weight:600;font-size:14.5px;
+  white-space:nowrap;color:var(--paper);
+  font-variant-numeric:tabular-nums;
+  text-align:right;
+}
+/* the verify marker is a working note, not a design element. keep it quiet. */
+.item__price em{
+  display:block;font-style:normal;
+  font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  /* --smoke, not --faint: this marker measured 2.77 against the 4.5 it needs,
+     on all 21 prices. Temporary scaffolding still has to be readable. */
+  color:var(--smoke);margin-top:3px;
+}
+
+.menu__foot{margin-top:26px;color:var(--faint);font-size:13px;line-height:1.55}
+
+/* ============ proof ============ */
+
+.sec--proof{border-top:1px solid var(--line)}
+
+/* A typographic band, deliberately a different species from the video cards:
+   text only, hairline rules, no surface. That difference is what lets two
+   moving elements coexist on one page without competing. */
+.ticker{
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+}
+.tick{
+  display:inline-flex;align-items:center;
+  padding:22px 0;
+  font-size:12.5px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--smoke);white-space:nowrap;
+}
+/* Numerals lead their item, so the gap always sits after them. The one item
+   that ends on a numeral gets the gap flipped instead: :last-child cannot
+   tell the two cases apart, because a lone <b> is both first and last. */
+.tick b{
+  font-family:var(--display);font-weight:600;
+  font-size:25px;letter-spacing:-.018em;text-transform:none;
+  color:var(--paper);margin-right:9px;
+  font-variant-numeric:tabular-nums;
+}
+.tick--trail b{margin:0 0 0 9px}
+/* separator lives on the item so every clone carries its own. neutral, not
+   ember: seven accent dots at once would blow the accent budget. */
+.tick::after{
+  content:"";
+  width:3px;height:3px;border-radius:50%;
+  background:var(--faint);
+  margin:0 clamp(26px,4vw,46px);
+  flex:none;
+}
+
+/* One foot for the whole section, replacing the separate sources line and
+   reviews note that existed while these were two sections. Both used to link
+   to Google independently. Links stay outside any moving track. */
+/* No margin-right on the link any more: that was spacing a list of five
+   sources apart, and on a single inline link it would shove the full stop
+   away from the word. */
+.proof__foot{
+  margin-top:26px;
+  font-size:12px;letter-spacing:.03em;line-height:1.75;color:var(--smoke);
+  max-width:76ch;
+}
+.proof__foot a{
+  color:var(--smoke);white-space:nowrap;
+  border-bottom:1px solid var(--line-2);padding-bottom:2px;
+  transition:color .18s ease,border-color .18s ease;
+}
+.proof__foot a:hover{color:var(--paper);border-bottom-color:var(--paper)}
+
+/* ============ the quotes, second half of the proof section ============ */
+
+/* The numbers band and the quotes are one section. This top rule is what
+   separates the two halves now that the second section head is gone. */
+.says{
+  list-style:none;margin:34px 0 0;padding:0;
+  display:grid;gap:0;border-top:1px solid var(--line);
+}
+@media(min-width:860px){.says{grid-template-columns:1fr 1fr}}
+.say{padding:28px 0;border-bottom:1px solid var(--line)}
+.say:last-child{border-bottom:none}
+@media(min-width:860px){
+  .say:nth-child(odd){padding-right:48px}
+  .say:nth-child(even){padding-left:48px;border-left:1px solid var(--line)}
+  .say:nth-last-child(-n+2){border-bottom:none}
+}
+.say__q{margin:0}
+/* 400, not the 600 the rest of the display type uses. These are five-line
+   paragraphs, not headings: a slab at 600 over that length reads shouted
+   rather than quoted. */
+.say__q p{
+  margin:0;
+  font-family:var(--display);font-weight:400;
+  font-size:18.5px;line-height:1.56;letter-spacing:-.008em;
+  color:var(--paper);
+}
+@media(min-width:860px){.say__q p{font-size:21px}}
+.say__by{
+  margin-top:15px;display:flex;flex-wrap:wrap;
+  align-items:baseline;gap:5px 12px;
+}
+.say__who{font-size:12.5px;font-weight:500;color:var(--paper)}
+.say__meta{
+  font-size:11px;font-weight:500;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--smoke);
+}
+/* ============ large orders ============ */
+
+.sec--trays{border-top:1px solid var(--line)}
+.trays{display:grid;gap:0;border-top:1px solid var(--line)}
+@media(min-width:860px){.trays{grid-template-columns:1.15fr 1fr}}
+.trays__body{padding:34px 0}
+@media(min-width:860px){.trays__body{padding-right:48px}}
+.trays__lede{font-size:16.5px;line-height:1.6;color:var(--smoke);max-width:44ch}
+.trays__lede + .trays__cta{margin-top:26px}
+.trays__cta{display:flex;flex-wrap:wrap;gap:10px}
+
+/* hairline rows, same device as the hours table */
+.trays__spec{margin:0;padding:34px 0}
+@media(min-width:860px){
+  .trays__spec{padding-left:48px;border-left:1px solid var(--line)}
+}
+@media(max-width:859px){
+  .trays__spec{border-top:1px solid var(--line)}
+}
+.trays__spec > div{
+  display:flex;align-items:baseline;justify-content:space-between;gap:20px;
+  padding:13px 0;border-bottom:1px solid var(--line);
+}
+.trays__spec > div:last-child{border-bottom:none}
+.trays__spec dt{font-size:13.5px;color:var(--smoke)}
+.trays__spec dd{
+  margin:0;font-family:var(--display);font-weight:600;font-size:17px;
+  color:var(--paper);letter-spacing:-.014em;text-align:right;
+}
+.trays__spec dd em{
+  font-style:normal;font-family:var(--body);font-weight:500;
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--smoke);margin-left:8px;
+}
+
+/* ============ find us ============ */
+
+.sec--find{border-top:1px solid var(--line)}
+.find{display:grid;gap:0;border-top:1px solid var(--line)}
+@media(min-width:860px){.find{grid-template-columns:1fr 1fr}}
+.find__col{display:flex;flex-direction:column;gap:22px;padding:34px 0}
+@media(min-width:860px){
+  .find__col:first-child{padding-right:48px}
+  .find__col:last-child{padding-left:48px;border-left:1px solid var(--line)}
+}
+@media(max-width:859px){
+  .find__col:last-child{border-top:1px solid var(--line)}
+}
+
+/* the live Google embed. deliberately unfiltered: a CSS invert would
+   recolour Google's own logo inside the frame, which their terms forbid */
+.mapframe{
+  margin:0;
+  border:1px solid var(--line);border-radius:var(--r-lg);
+  overflow:hidden;background:var(--coal);
+  transition:border-color .2s ease;
+}
+.mapframe:hover{border-color:var(--line-2)}
+.mapframe__frame{
+  display:block;width:100%;border:0;
+  aspect-ratio:4/3;max-height:430px;
+}
+@media(max-width:520px){.mapframe__frame{aspect-ratio:5/4}}
+.mapframe__cap{
+  display:flex;flex-wrap:wrap;align-items:baseline;
+  justify-content:space-between;gap:6px 20px;
+  padding:14px 16px;border-top:1px solid var(--line);
+  font-size:13px;color:var(--smoke);
+}
+.mapframe__cap a{
+  color:var(--smoke);font-weight:500;font-size:11px;
+  letter-spacing:.12em;text-transform:uppercase;
+  border-bottom:1px solid var(--line-2);padding-bottom:2px;
+  transition:color .18s ease,border-color .18s ease;
+}
+.mapframe__cap a:hover{color:var(--paper);border-bottom-color:var(--paper)}
+.find__actions{display:flex;flex-wrap:wrap;gap:10px}
+/* Same hairline-row device as the trays spec. It balances the hours column
+   against the map, which the seven row table used to do by sheer length. */
+.visit{margin:26px 0 0;padding:0}
+.visit > div{
+  display:flex;align-items:baseline;justify-content:space-between;gap:20px;
+  padding:11px 0;border-bottom:1px solid var(--line);
+}
+.visit > div:last-child{border-bottom:none}
+.visit dt{font-size:13px;color:var(--smoke)}
+.visit dd{margin:0;font-size:13.5px;font-weight:500;color:var(--paper);text-align:right}
+.visit dd em{
+  font-style:normal;font-weight:500;font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--smoke);margin-left:7px;
+}
+
+.hours{padding:0}
+.hours__top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px}
+.hours__top h3{font-family:var(--display);font-weight:600;font-size:21px;letter-spacing:-.018em}
+/* The seven identical rows this replaced were the most redundant block on
+   the page. One confident line carries the same information and lets the
+   hours column breathe next to the map. */
+.hours__every{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;
+  padding:20px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+}
+.hours__every b{
+  font-family:var(--body);font-weight:600;font-size:11px;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--smoke);
+  flex:0 0 100%;
+}
+.hours__every span{
+  font-family:var(--display);font-weight:600;
+  font-size:clamp(22px,2.4vw,28px);letter-spacing:-.022em;
+  color:var(--paper);font-variant-numeric:tabular-nums;
+}
+/* Only on screen while a SPECIAL_HOURS entry is running. It gets the accent
+   because a changed opening time is the one thing here a customer cannot
+   afford to miss: the cost of missing it is driving to a shut shop. */
+.hours__banner{
+  margin-top:18px;
+  border:1px solid var(--line-2);border-left:2px solid var(--ember-ink);
+  border-radius:var(--r-sm);padding:11px 14px;
+  font-size:13px;font-weight:500;color:var(--paper);
+}
+.hours__banner[hidden]{display:none}
+/* --smoke, not --faint: 12.5px on --faint measures 2.94 against the 4.5 it
+   needs. Same failure the sources line had. */
+.hours__note{margin-top:18px;color:var(--smoke);font-size:12.5px}
+
+/* ============ footer ============ */
+
+.foot{border-top:1px solid var(--line)}
+.foot__in{max-width:var(--maxw);margin:0 auto;padding:clamp(44px,6vw,68px) var(--pad)}
+.foot__line{margin-top:22px;color:var(--smoke);font-size:13.5px;max-width:48ch;line-height:1.6}
+.foot__links{
+  display:flex;flex-wrap:wrap;gap:26px;margin-top:26px;
+  font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+}
+.foot__links a{color:var(--smoke);transition:color .18s ease}
+.foot__links a:hover{color:var(--paper)}
+.foot__fine{
+  margin-top:34px;padding-top:22px;border-top:1px solid var(--line);
+  color:var(--faint);font-size:11.5px;letter-spacing:.04em;
+}
+
+/* ============ sticky dock (mobile) ============ */
+
+.dock{
+  position:fixed;left:0;right:0;bottom:0;z-index:95;
+  display:grid;grid-template-columns:1.4fr 1fr 1fr;
+  height:calc(var(--dock-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:rgba(11,11,12,.97);
+  border-top:1px solid var(--line);
+}
+.dock__a{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--smoke);
+}
+.dock__a + .dock__a{border-left:1px solid var(--line)}
+.dock__a svg{width:17px;height:17px;color:var(--faint)}
+.dock__a--main{background:var(--ember);color:#FFF}
+.dock__a--main svg{color:#FFF}
+
+@media(min-width:860px){
+  .dock{display:none}
+  body{padding-bottom:0}
+}
+
+/* ============ reel viewer ============ */
+
+.viewer{
+  position:fixed;inset:0;z-index:150;
+  background:#050506;
+  display:grid;grid-template-rows:1fr auto;
+  place-items:center;
+  padding:18px;
+}
+.viewer[hidden]{display:none}
+.viewer__stage{position:relative;height:100%;width:100%;display:grid;place-items:center}
+.viewer__stage video{
+  max-height:100%;max-width:min(100%,calc(100vh - 150px) * 0.5625);
+  aspect-ratio:9/16;
+  border-radius:var(--r-lg);
+  background:#000;object-fit:cover;
+}
+.viewer__x,.viewer__nav{
+  position:absolute;z-index:3;
+  border-radius:50%;
+  background:transparent;border:1px solid var(--line-2);color:var(--paper);
+  display:grid;place-items:center;cursor:pointer;
+  transition:border-color .18s ease,background .18s ease;
+}
+.viewer__x{top:16px;right:16px;width:38px;height:38px}
+.viewer__x svg{width:16px;height:16px}
+.viewer__nav{top:50%;translate:0 -50%;width:40px;height:40px}
+.viewer__nav svg{width:17px;height:17px}
+.viewer__nav--prev{left:16px}
+.viewer__nav--next{right:16px}
+.viewer__nav:hover,.viewer__x:hover{border-color:var(--paper);background:rgba(241,237,230,.06)}
+@media(max-width:700px){.viewer__nav{display:none}}
+
+.viewer__foot{
+  width:100%;max-width:520px;
+  display:flex;align-items:center;justify-content:space-between;gap:18px;
+  padding:18px 4px 4px;
+}
+.viewer__cap{font-size:13px;color:var(--smoke);flex:1}
+.viewer__sound{
+  display:inline-flex;align-items:center;gap:8px;flex:none;
+  background:transparent;border:1px solid var(--line-2);color:var(--smoke);
+  border-radius:var(--r-sm);padding:9px 15px;
+  font-family:var(--body);font-size:11.5px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
+  transition:color .18s ease,border-color .18s ease;
+}
+.viewer__sound svg{width:15px;height:15px}
+.viewer__sound .wave{opacity:0}
+.viewer__sound:hover{color:var(--paper);border-color:var(--paper)}
+.viewer__sound.is-on{border-color:var(--paper);color:var(--paper)}
+.viewer__sound.is-on .wave{opacity:1}
+
+/* ============ scroll reveal ============ */
+
+.rv{opacity:0;transform:translateY(10px);transition:opacity .7s ease,transform .7s ease}
+.rv.is-in{opacity:1;transform:none}
+
+/* ============ reduced motion ============ */
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+  .rv{opacity:1;transform:none}
+  .hero__cue{display:none}
+}
