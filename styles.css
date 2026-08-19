@@ -386,6 +386,11 @@ svg{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-l
 }
 .marquee{padding:2px 0 6px}
 
+/* The reel band answers a finger. pan-y keeps a vertical swipe scrolling the
+   page and hands the horizontal one to JS, which is the whole gesture split. */
+.marquee{touch-action:pan-y;cursor:grab}
+.marquee.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
+
 .marquee__track,.ticker__track{
   display:flex;
   width:max-content;
@@ -394,6 +399,9 @@ svg{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-l
 }
 .marquee__track{gap:clamp(12px,1.6vw,16px)}
 .marquee__track.is-paused,.ticker__track.is-paused{animation-play-state:paused}
+/* A dragged band owns its own transform, so the keyframe has to be off. The
+   ticker is untouched and still runs on the compositor. */
+.marquee__track.is-drag{animation:none}
 /* the ticker runs the other way, so it reads as counterpoint not a copy */
 .is-reverse{animation-direction:reverse}
 

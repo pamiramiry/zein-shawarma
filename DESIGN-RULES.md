@@ -116,7 +116,9 @@ The `.strip` already carried its own `border-bottom`, so nothing was left with a
 
 Videos are a **continuously drifting marquee, never a stacked grid and never a stepping carousel**. It never comes to rest: cards slide off the left edge and reappear on the right, forever. Stepping between slides reads as a widget; constant drift reads as a band of atmosphere, which is the whole point.
 
-**How the loop is seamless.** The track holds enough duplicate copies of the card set to cover the viewport at least twice, then a `linear infinite` animation slides it left by exactly one copy and restarts. Copy 2 sits precisely where copy 1 began, so the restart is invisible.
+**How the loop is seamless.** The track holds enough duplicate copies of the card set to cover the viewport at least twice, then it slides left by exactly one copy and starts over. Copy 2 sits precisely where copy 1 began, so the restart is invisible.
+
+**Two ways to move a band, chosen per band.** The stats ticker runs a `linear infinite` keyframe, which the compositor owns outright. The reel band integrates its own position in a `requestAnimationFrame` loop and writes the `transform` itself, because it answers a finger, and a keyframe cannot be interrupted and resumed from an arbitrary offset. Its position is held modulo `--shift`, so the wrap is exact at any speed, including in the middle of a fling.
 
 - `--shift` is **measured from the live layout** in JS (first card to its twin in the next copy), never assumed to be `50%`. A flex `gap` makes the two halves uneven, and a half-gap error shows up as a visible stutter once a lap.
 - Speed is constant in **pixels per second** (`PX_PER_SEC`, currently 42), and the duration is derived from the shift. Adding or removing videos changes how long a lap takes, never how fast things move.
@@ -127,16 +129,35 @@ Videos are a **continuously drifting marquee, never a stacked grid and never a s
 
 ### Pausing
 
-The drift runs only when **every** hold is clear. Any single hold parks it exactly where it stands, by toggling `animation-play-state`, so nothing jumps.
+The drift runs only when **every** hold is clear. Any single hold parks it exactly where it stands, so nothing jumps: the ticker by toggling `animation-play-state`, the reel band by dropping its frame loop, which leaves the transform where it was.
 
 | Hold | Set by | Cleared by |
 |---|---|---|
 | `hover` | pointer enters the marquee | pointer leaves |
-| `touch` | `pointerdown` | 4 seconds after the last one |
 | `viewer` | fullscreen player opens | it closes |
 | `tab` | tab goes to the background | it comes back |
 
+**A finger is no longer a hold.** It used to be one: `pointerdown` parked the band for four seconds and that was all a touch could do. It now moves the band, which is the section below.
+
 It also stops when the marquee scrolls off screen, and never starts under `prefers-reduced-motion`, where the track becomes a plain scrollable row with no duplicates.
+
+### The band answers a finger
+
+Hold it and it tracks 1:1. Let go and it coasts, then the drift picks up again from wherever it was left. There are no slides and nothing to land on: this is the same endless band, moved by hand.
+
+| State | What happens |
+|---|---|
+| `drag` | the finger owns the position, the frame loop is cancelled outright |
+| `coast` | the release velocity decays at `0.997` per millisecond, so it is frame rate independent |
+| `settle` | 500ms of stillness, then the drift eases back in over 400ms |
+| `drift` | as before, 42px/s |
+
+- The coast hands back to the drift the moment it decays **to drift speed**, not to zero. Below 42px/s the two are indistinguishable, so the handover cannot be seen.
+- Release velocity is taken from the **last 90ms of the gesture**, not the whole of it. Someone who drags slowly and flicks at the end means the flick. It is capped at 4000px/s.
+- **Past 8px of travel it is a drag, not a tap**, and the click is swallowed in the capture phase before it reaches the handler that opens the player. Without this every swipe would launch a video.
+- `touch-action: pan-y` on the marquee is the whole gesture split: vertical stays with the page, horizontal comes to JS. A vertical swipe that starts on the band therefore gets a `pointercancel`, which ends the drag properly rather than leaving it holding a finger that is gone.
+- **Pause means pause.** If the control is pressed, a fling still coasts, because that motion is the visitor's own, but nothing restarts afterwards. WCAG 2.2.2 is about motion that starts on its own.
+- It is **not** native scroll, and this is the one place the site departs from the pattern used for the quotes track below. Wrapping an endless track means assigning `scrollLeft` mid fling, which kills momentum at the exact moment the gesture is supposed to feel good. A band with no ends has to own its own position.
 
 ### Why the track is `aria-hidden`
 
@@ -153,7 +174,7 @@ A card that slides in showing a still poster and then starts is the one thing th
 
 When the cap does bind, the free slot goes to whichever queued video is **closest to the middle of the screen**, not whichever queued first.
 
-Measured cost: the drift animation itself is free (identical frame rate running or parked, since it is a composited transform). Going from 1 clip to 7 cost 3fps under software decoding, and real hardware decodes on the GPU.
+Measured cost: taking the reel band off the keyframe and onto a frame loop cost nothing measurable. Three 3s runs with all six clips playing, headless software decoding: **30.1fps on the keyframe build, 30.0fps on the frame loop**. Headless imposes that ceiling, so read it as no regression rather than as an absolute figure. The transform is still composited, the only new main thread work is one style write per frame, and the loop is cancelled outright whenever the band is parked or off screen. Going from 1 clip to 7 cost 3fps under software decoding, and real hardware decodes on the GPU.
 
 ## Where the red comes from
 
@@ -207,7 +228,7 @@ The quotes **never move on their own**, and the ticker's screen position did not
 
 Four stacked quotes make a very long column on a phone. Under the grid breakpoint `.says` becomes a horizontal scroll-snap track, one quote per view, with hairline dots underneath.
 
-**This is not a third moving band and must never become one.** The distinction is the whole reason it is allowed: a marquee moves on a timer, this moves on a finger. **Do not add auto-advance, and do not add a timer of any kind.** If it ever animates by itself the page has three moving things and the two-bands rule is dead.
+**This is not a third moving band and must never become one.** The distinction is about what *starts* the motion, not about what a finger is allowed to do: the reel marquee starts on a timer and also answers a finger, this track only ever moves when somebody moves it. **Do not add auto-advance, and do not add a timer of any kind.** If it ever animates by itself the page has three moving things and the two-bands rule is dead.
 
 - The track is **native CSS scroll-snap**. It swipes with `main.js` deleted; the script only adds the dots. Build it that way round.
 - **Dots count reachable scroll stops, not quotes.** At the grid breakpoint the track stops scrolling, the stop count drops to zero, and the dots remove themselves rather than sitting there dead.

@@ -320,9 +320,18 @@
      Speed is constant in pixels per second, so adding or removing items
      changes how long a lap takes, never how fast things move.
 
+     Two ways to move a band, and the choice is per band. The ticker keeps
+     the CSS keyframe, which the compositor owns outright. The reel band asks
+     for drag, which hands its position to JS instead: a finger cannot
+     interrupt a keyframe and resume it from an arbitrary offset. Native
+     scroll cannot do this job either, because wrapping an endless track
+     means assigning scrollLeft mid fling, which kills momentum at the exact
+     moment the gesture is supposed to feel good.
+
      opts:
        speed     px per second
        reverse   run the other way (the ticker, so it is not a copy)
+       drag      the band answers a finger. see the drag block below
        btn       pause control          btnText  its label element
        noun      what the control calls this band
        onClone   per-clone fixup, used only by the video band
@@ -342,6 +351,36 @@
     if (reduceMotion) return null;
 
     if (opts.reverse) track.classList.add('is-reverse');
+
+    /* Drag needs pointer events. Without them the band drifts on the CSS
+       keyframe exactly as it always did, rather than losing its motion. */
+    var drag = !!opts.drag && 'PointerEvent' in window;
+    var dir = opts.reverse ? -1 : 1;
+
+    var shift = 0;      // one full copy of the items, measured below
+    var pos = 0;        // px travelled, kept inside 0..shift so the seam is modular
+    var vel = 0;        // px/s, set by a fling and decayed by the coast
+    var ramp = 1;       // 0..1, eases the drift back up after a coast
+    var resumeAt = 0;   // when the settle ends and the ramp starts
+    var mode = 'drift'; // drift | drag | coast | settle
+    var frame = null, last = 0, warm = false;
+
+    var DRAG_MIN = 8;         // px of travel before a touch is a drag and not a tap
+    var COAST_DECAY = 0.997;  // per millisecond, so the coast is frame rate independent
+    var MAX_FLING = 4000;     // px/s. a hard flick should not become a blur
+    var SETTLE = 500;         // ms of stillness before the drift comes back
+    var RAMP = 400;           // ms to ease it back up to speed
+
+    if (drag) track.classList.add('is-drag');
+
+    function wrap(p) {
+      if (shift <= 0) return p;
+      return ((p % shift) + shift) % shift;
+    }
+
+    function paint() {
+      track.style.transform = 'translate3d(' + (-pos) + 'px,0,0)';
+    }
 
     function addCopy() {
       originals.forEach(function (node) {
@@ -366,10 +405,13 @@
     }
 
     function apply() {
-      var shift = measure();
-      if (shift <= 0) return;
-      track.style.setProperty('--shift', shift + 'px');
-      track.style.setProperty('--dur', (shift / speed).toFixed(2) + 's');
+      var s = measure();
+      if (s <= 0) return;
+      shift = s;
+      track.style.setProperty('--shift', s + 'px');
+      track.style.setProperty('--dur', (s / speed).toFixed(2) + 's');
+      // a resize changes the modulus, so an old position can now be past it
+      if (drag) { pos = wrap(pos); paint(); }
       if (opts.onMeasure) opts.onMeasure(box, track, originals);
     }
 
@@ -394,10 +436,72 @@
     var onScreen = false;
     var noun = opts.noun || 'reel';
 
+    function canDrift() {
+      return !stopped && onScreen && !document.hidden
+          && Object.keys(holds).length === 0;
+    }
+
     function render() {
-      var run = !stopped && onScreen && !document.hidden
-             && Object.keys(holds).length === 0;
-      track.classList.toggle('is-paused', !run);
+      if (!drag) { track.classList.toggle('is-paused', !canDrift()); return; }
+      // while the finger is down it owns the position outright
+      if (mode === 'drag') { stopLoop(); return; }
+      /* The frame loop exists only while something is actually moving, so a
+         parked or off-screen band costs what the paused keyframe cost: nothing. */
+      if (mode !== 'drift' || canDrift()) startLoop(); else stopLoop();
+    }
+
+    function startLoop() {
+      if (frame) return;
+      if (!warm) { last = performance.now(); warm = true; }
+      frame = requestAnimationFrame(tick);
+    }
+
+    function stopLoop() {
+      warm = false;
+      if (!frame) return;
+      cancelAnimationFrame(frame);
+      frame = null;
+    }
+
+    // so the drift arrives at speed rather than switching on at it
+    function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+    function tick(now) {
+      frame = null;
+      // a backgrounded tab must not come back and teleport the band
+      var dt = Math.min(now - last, 64);
+      last = now;
+
+      if (mode === 'coast') {
+        pos = wrap(pos + vel * dt / 1000);
+        vel *= Math.pow(COAST_DECAY, dt);
+        /* Hand back once the fling has decayed to drift speed. Below that the
+           two are indistinguishable, so the handover cannot be seen. */
+        if (Math.abs(vel) <= speed || !onScreen || document.hidden) {
+          vel = 0;
+          mode = 'settle';
+          resumeAt = now + SETTLE;
+          ramp = 0;
+        }
+        paint();
+
+      } else if (mode === 'settle') {
+        /* Pause pressed, pointer still hovering, viewer open: the fling was
+           theirs and it finished, but nothing restarts on its own. */
+        if (!canDrift()) { mode = 'drift'; ramp = 1; }
+        else if (now >= resumeAt) {
+          ramp = Math.min(1, (now - resumeAt) / RAMP);
+          pos = wrap(pos + dir * speed * easeOut(ramp) * dt / 1000);
+          paint();
+          if (ramp >= 1) mode = 'drift';
+        }
+
+      } else if (mode === 'drift' && canDrift()) {
+        pos = wrap(pos + dir * speed * dt / 1000);
+        paint();
+      }
+
+      render();
     }
 
     function hold(key) { holds[key] = 1; render(); }
@@ -407,13 +511,110 @@
     box.addEventListener('mouseenter', function () { hold('hover'); });
     box.addEventListener('mouseleave', function () { release('hover'); });
 
-    // a touch holds it, then it drifts on again after a beat
-    var settle = null;
-    box.addEventListener('pointerdown', function () {
-      hold('touch');
-      clearTimeout(settle);
-      settle = setTimeout(function () { release('touch'); }, 4000);
-    }, { passive: true });
+    if (!drag) {
+      // a touch holds it, then it drifts on again after a beat
+      var settle = null;
+      box.addEventListener('pointerdown', function () {
+        hold('touch');
+        clearTimeout(settle);
+        settle = setTimeout(function () { release('touch'); }, 4000);
+      }, { passive: true });
+    }
+
+    /* ----------------------------------------------------------------
+       The finger. The band tracks it 1:1 while it is down, coasts when
+       it lets go, then the drift picks up from wherever it was left.
+       Nothing snaps back and there are no slides to land on: this is the
+       same endless band, moved by hand.
+       ---------------------------------------------------------------- */
+    if (drag) {
+      var pid = null, lastX = 0, moved = 0, dragged = false;
+      var samples = [];   // recent {x, t}, for the release velocity
+
+      paint();  // the keyframe is off now, so the band needs a starting transform
+
+      box.addEventListener('pointerdown', function (e) {
+        if (e.button > 0) return;   // right and middle click are not gestures
+        pid = e.pointerId;
+        mode = 'drag';
+        vel = 0;
+        ramp = 1;
+        moved = 0;
+        dragged = false;
+        lastX = e.clientX;
+        samples = [{ x: e.clientX, t: e.timeStamp }];
+        stopLoop();
+        /* Capture, or a fast drag that leaves the band vertically stops
+           dead the moment the pointer crosses the edge. */
+        try { box.setPointerCapture(pid); } catch (err) {}
+      });
+
+      box.addEventListener('pointermove', function (e) {
+        if (pid === null || e.pointerId !== pid) return;
+        var dx = e.clientX - lastX;
+        lastX = e.clientX;
+
+        moved += Math.abs(dx);
+        if (!dragged && moved > DRAG_MIN) {
+          dragged = true;
+          box.classList.add('is-dragging');
+        }
+
+        pos = wrap(pos - dx);
+        paint();
+
+        samples.push({ x: e.clientX, t: e.timeStamp });
+        if (samples.length > 6) samples.shift();
+      });
+
+      var endDrag = function (e) {
+        if (pid === null || e.pointerId !== pid) return;
+        try { box.releasePointerCapture(pid); } catch (err) {}
+        pid = null;
+        box.classList.remove('is-dragging');
+
+        /* Velocity over the tail of the gesture, not the whole of it.
+           Someone who drags slowly and flicks at the end means the flick. */
+        var end = samples[samples.length - 1];
+        var first = end;
+        for (var i = samples.length - 1; i >= 0; i--) {
+          if (end.t - samples[i].t <= 90) first = samples[i]; else break;
+        }
+        var span = end.t - first.t;
+        var v = span > 0 ? ((first.x - end.x) / span) * 1000 : 0;
+        v = Math.max(-MAX_FLING, Math.min(MAX_FLING, v));
+
+        // anything slower than the drift itself is not a fling, it is a let go
+        if (Math.abs(v) > speed) {
+          vel = v;
+          mode = 'coast';
+        } else {
+          vel = 0;
+          mode = 'settle';
+          resumeAt = performance.now() + SETTLE;
+          ramp = 0;
+        }
+        render();
+      };
+
+      box.addEventListener('pointerup', endDrag);
+      box.addEventListener('pointercancel', endDrag);
+      /* Belt for the case where the capture call above did not take: a mouse
+         released outside the band would otherwise leave it holding a pointer
+         that no longer exists. The guard on pointerId makes the double call
+         from a captured pointer a no-op. */
+      window.addEventListener('pointerup', endDrag);
+
+      /* A swipe must not open the tile it started on. This runs in the
+         capture phase, so it lands before the rail's own click handler,
+         which is the one that opens the player. */
+      box.addEventListener('click', function (e) {
+        if (!dragged) return;
+        e.stopPropagation();
+        e.preventDefault();
+        dragged = false;
+      }, true);
+    }
 
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) hold('tab'); else release('tab');
@@ -459,6 +660,7 @@
 
     railAuto = makeMarquee(box, rail, {
       speed: 42,
+      drag: true,
       noun: 'video reel',
       btn: $('#railPlay'),
       btnText: $('#railPlayText'),
