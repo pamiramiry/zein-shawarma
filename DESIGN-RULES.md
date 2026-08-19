@@ -288,7 +288,8 @@ It is not decoration. **Over the hero the dock is the same two actions twice**: 
 
 ## Content rules
 
-- Every unconfirmed price or fact ships as `[verify]`. Never quietly invent a number.
+- Every unconfirmed price or fact ships as `[verify]`. Never quietly invent a number. **The menu no longer needs it**: prices came off the shop's own in-store board in August 2026, so the marker is down to a single row in Find Us. One `SPECIAL` marker now uses the same `.item__price em` slot the 21 `[verify]`s used to fill.
+- **The board is the menu's source of truth, not the videos.** Burgers and Desserts had been read off the shop's own footage and were dropped once the board turned out not to list them: a menu offering something the kitchen will not make is worse than one that omits a special. Footage is evidence a dish exists, not evidence it is on sale.
 - **Check what a number actually measures before attributing it.** An early build shipped a `9.4/10` rating in two places, credited to a directory that turned out to hold **zero** reviews for this shop. The number had come from a different site, as a bare score with no methodology and no review count. Both instances were replaced by figures the client confirmed directly. **A number plus the wrong source is worse than no number**, and this is the single most important content rule here.
 - **Do not add `aggregateRating` to the JSON-LD.** Google's structured-data policy prohibits marking up ratings collected from Google itself, and self-serving rating markup risks a manual action. The 4.8 stays visible text only.
 - Ratings and counts age. `4.8`, `500+` and `1.5K` are point-in-time snapshots, unlike the address or the hours. `1.5K` is deliberately rounded **down** from 1,536 so it stays true for a while.
